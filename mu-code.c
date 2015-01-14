@@ -231,7 +231,8 @@ void cpu_6502_bcs_rel(){
 */
 void cpu_6502_bne_rel(){
   cycles = 2;
-  if(getZeroflag(flags)=='1'){
+  char myflag = getZeroflag(flags);
+  if(*acc!="00000000"){
     char low[]="00000000";
     char high[]="00000000";
     cp_register(pcl, abrl);
@@ -241,17 +242,12 @@ void cpu_6502_bne_rel(){
     access_memory();
 
     cp_register(dbr, low);
-
-    inc_pc();
-    cp_register(pcl, abrl);
-    cp_register(pch, abrh);
-
-    set_rw2read();
-    access_memory();
-    cp_register(dbr, high);
-  
-    cp_register(low, pcl);
-    cp_register(high, pch);
+    
+    printf("\r\n low: %i \r\n",conv_bitstr2int(low, 0, 7));
+    int i;
+    for(i = 0; i < conv_bitstr2int(low, 0, 7); i++){
+      inc_pc();
+    }
   }
   else{
     inc_pc();
@@ -374,7 +370,28 @@ void cpu_6502_rts_imp(){
 */
 void cpu_6502_jmp_abs(){
   cycles = 3;
+  char low[]="00000000";
+  char high[]="00000000";
+  cp_register(pcl, abrl);
+  cp_register(pch, abrh);
+
+  set_rw2read();
+  access_memory();
+
+  cp_register(dbr, low);
+
+  inc_pc();
+  cp_register(pcl, abrl);
+  cp_register(pch, abrh);
+
+  set_rw2read();
+  access_memory();
+  cp_register(dbr, high);
   
+  printf("\r\n low: %i high: %i \r\n",conv_bitstr2int(low, 0, 7),conv_bitstr2int(high, 0, 7));
+  
+  cp_register(low, pcl);
+  cp_register(high, pch);
 }
 
 
@@ -1209,7 +1226,7 @@ void cpu_6502_tay_imp(){
 */
 void cpu_6502_tya_imp(){
   cycles = 2;
-
+  cp_register(idy,acc);
 }
 
 
@@ -1977,6 +1994,38 @@ void cpu_6502_cmp_imm(){
 void cpu_6502_cmp_zp(){
   cycles = 3;
   
+  char low[]="00000000";
+  char high[]="00000000";
+  cp_register(pcl, abrl);
+  cp_register(pch, abrh);
+
+  set_rw2read();
+  access_memory();
+
+  cp_register(dbr, low);
+  
+  /*char zero[]="00000000";
+  cp_register(pcl, abrl);
+  cp_register(pch, abrh);
+
+  set_rw2read();
+  access_memory();
+
+  cp_register(dbr, abrl);
+  cp_register(zero, abrh);
+
+  set_rw2read();
+  access_memory();*/
+  
+  printf("\r\n low: %i acc: %i diff: %i \r\n",conv_bitstr2int(low, 0, 7),conv_bitstr2int(acc, 0, 7),conv_bitstr2int(low, 0, 7)-conv_bitstr2int(acc, 0, 7));
+  
+  if(conv_bitstr2int(dbr, 0, 7)==conv_bitstr2int(acc, 0, 7)){
+    *acc = "00000000";
+  }
+  else{
+    *acc = "00000001";
+  }
+  inc_pc();
 }
 
 
