@@ -161,9 +161,8 @@ void adr_abs(){
 	cp_register(dbr, abrh);
 }
 
-void adr_abx(){
+void adr_abx(char* localflags){
 	char low[]="00000000";
-	char localflags[]="00000000";
 	// write pc to adr bus
 	cp_register(pcl, abrl);
 	cp_register(pch, abrh);
@@ -186,9 +185,8 @@ void adr_abx(){
 	alu(ALU_OP_ADD_WITH_CARRY,dbr,"00000000",abrh,localflags);
 }
 
-void adr_aby(){
+void adr_aby(char* localflags){
 	char low[]="00000000";
-	char localflags[]="00000000";
 	// write pc to adr bus
 	cp_register(pcl, abrl);
 	cp_register(pch, abrh);
@@ -628,7 +626,6 @@ void cpu_6502_rts_imp(){
 */
 void cpu_6502_jmp_abs(){
 	cycles = 3;
-	char _tmp[] = "00000000";
 	adr_abs();
 	cp_register(abrl, pcl);
 	cp_register(abrh, pch);
@@ -980,7 +977,8 @@ void cpu_6502_lda_abs(){
 */
 void cpu_6502_lda_abx (){
 	cycles = 4;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 
 	cp_register(dbr, acc);
 
@@ -1000,7 +998,8 @@ void cpu_6502_lda_abx (){
 */
 void cpu_6502_lda_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 
 	cp_register(dbr, acc);
 
@@ -1108,7 +1107,6 @@ void cpu_6502_sta_izy(){
 */
 void cpu_6502_sta_abs(){
 	cycles = 3;
-	char _tmp[] = "00000000";
 	adr_abs();
 
 	cp_register(acc, dbr);
@@ -1131,7 +1129,8 @@ void cpu_6502_sta_abs(){
 */
 void cpu_6502_sta_abx (){
 	cycles = 5;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 
 	cp_register(acc, dbr);
 
@@ -1153,7 +1152,8 @@ cycles: 5
 */
 void cpu_6502_sta_aby(){
 	cycles = 5;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	
 	cp_register(acc, dbr);
 
@@ -1262,7 +1262,8 @@ void cpu_6502_ldx_abs(){
 */
 void cpu_6502_ldx_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 
 	set_rw2read();
 	access_memory();
@@ -1309,18 +1310,7 @@ void cpu_6502_stx_zp(){
 */
 void cpu_6502_stx_zpy(){
 	cycles = 4;
-
-	char zero[]="00000000";
-	char localflags[]="00000000";
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD, dbr, idy, dbr, localflags);
-	cp_register(dbr, abrl);
-	cp_register(zero, abrh);
+	adr_zpy();
 
 	cp_register(dbr, idx);
 
@@ -1343,30 +1333,7 @@ void cpu_6502_stx_zpy(){
 */
 void cpu_6502_stx_abs(){
 	cycles = 4;
-
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	// store acc to absolute address from memory
-	cp_register(dbr, abrl);
-	cp_register(_tmp, abrh);
+	adr_abs();
 
 	cp_register(dbr, idx);
 
@@ -1389,17 +1356,13 @@ void cpu_6502_stx_abs(){
 */
 void cpu_6502_ldy_imm(){
 	cycles = 2;
-
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
+	adr_imm();
 	set_rw2read();
 	access_memory();
 
 	cp_register(dbr, idy);
 
 	zsflagging(flags,idx);
-
 	inc_pc();
 }
 
@@ -1416,21 +1379,12 @@ void cpu_6502_ldy_imm(){
 */
 void cpu_6502_ldy_zp(){
 	cycles = 3;
-
-	char zero[]="00000000";
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	cp_register(dbr, abrl);
-	cp_register(zero, abrh);
-
-	set_rw2read();
+	adr_zp();
+	set_rw2read();	
 	access_memory();
 
 	cp_register(dbr, idy);
+	
 	zsflagging(flags,idx);
 	inc_pc();
 
@@ -1449,18 +1403,7 @@ void cpu_6502_ldy_zp(){
 */
 void cpu_6502_ldy_zpx (){
 	cycles = 4;
-	char zero[]="00000000";
-	char localflags[]="00000000";
-
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD, dbr, idx, dbr, localflags);
-	cp_register(dbr, abrl);
-	cp_register(zero, abrh);
+	adr_zpx();
 
 	set_rw2read();
 	access_memory();
@@ -1483,35 +1426,12 @@ void cpu_6502_ldy_zpx (){
 */
 void cpu_6502_ldy_abs(){
 	cycles = 4;
-
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	// store acc to absolute address from memory
-	cp_register(dbr, abrl);
-	cp_register(_tmp, abrh);
-
+	adr_abs();
 	set_rw2read();
 	access_memory();
 
 	cp_register(dbr, idy);
+	
 	zsflagging(flags,idx);
 	inc_pc();
 }
@@ -1530,27 +1450,8 @@ void cpu_6502_ldy_abs(){
 */
 void cpu_6502_ldy_abx(){
 	cycles = 4;
-
-	char low[]="00000000";
 	char localflags[]="00000000";
-
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	cp_register(dbr, low);
-
-	inc_pc();
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD,low,idx,abrl,localflags);
-	alu(ALU_OP_ADD_WITH_CARRY,dbr,"00000000",abrh,localflags);
+	adr_abx(localflags);
 
 	set_rw2read();
 	access_memory();
@@ -1640,36 +1541,12 @@ void cpu_6502_sty_zpx (){
 */
 void cpu_6502_sty_abs(){
 	cycles = 4;
-
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	// store acc to absolute address from memory
-	cp_register(dbr, abrl);
-	cp_register(_tmp, abrh);
+	adr_abs();
 
 	cp_register(idy, dbr);
 
 	set_rw2write();
 	access_memory();
-
 	inc_pc();
 }
 
@@ -1852,10 +1729,7 @@ void cpu_6502_php_imp(){
 */
 void cpu_6502_ora_imm(){
 	cycles = 2;
-
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
+	adr_imm();
 	set_rw2read();
 	access_memory();
 
@@ -2016,30 +1890,7 @@ void cpu_6502_ora_izy(){
 */
 void cpu_6502_ora_abs(){
 	cycles = 4;
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	// store acc to absolute address from memory
-	cp_register(_tmp, abrl);
-	cp_register(dbr, abrh);
-
+	adr_abs();
 	set_rw2read();
 	access_memory();
 
@@ -2062,27 +1913,8 @@ void cpu_6502_ora_abs(){
 */
 void cpu_6502_ora_abx (){
 	cycles = 4;
-
-	char low[]="00000000";
 	char localflags[]="00000000";
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	cp_register(dbr, low);
-
-	inc_pc();
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD,low,idx,abrl,localflags);
-	alu(ALU_OP_ADD_WITH_CARRY,dbr,"00000000",abrh,localflags);
-
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2104,36 +1936,14 @@ void cpu_6502_ora_abx (){
 */
 void cpu_6502_ora_aby(){
 	cycles = 4;
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
-	// store acc to absolute address from memory
-	cp_register(_tmp, abrl);
-	cp_register(dbr, abrh);
+	alu(ALU_OP_OR, dbr, acc, acc, localflags);
 
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_OR, dbr, acc, acc, flags);
-
-	inc_pc();
+	inc_pc(); 
 }
 
 
@@ -2149,10 +1959,7 @@ void cpu_6502_ora_aby(){
 */
 void cpu_6502_and_imm(){
 	cycles = 2;
-
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
+	adr_imm();
 	set_rw2read();
 	access_memory();
 
@@ -2313,30 +2120,7 @@ void cpu_6502_and_izy(){
 */
 void cpu_6502_and_abs(){
 	cycles = 4;
-	char _tmp[] = "00000000";
-
-	// Read address high from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-	// Temporary store it
-	cp_register(dbr, _tmp);
-
-	inc_pc();
-
-	// Read adress low from pc
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	// store acc to absolute address from memory
-	cp_register(_tmp, abrl);
-	cp_register(dbr, abrh);
-
+	adr_abs();
 	set_rw2read();
 	access_memory();
 
@@ -2358,27 +2142,8 @@ void cpu_6502_and_abs(){
 */
 void cpu_6502_and_abx (){
 	cycles = 4;
-
-	char low[]="00000000";
 	char localflags[]="00000000";
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	cp_register(dbr, low);
-
-	inc_pc();
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD,low,idx,abrl,localflags);
-	alu(ALU_OP_ADD_WITH_CARRY,dbr,"00000000",abrh,localflags);
-
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2400,26 +2165,8 @@ void cpu_6502_and_abx (){
 */
 void cpu_6502_and_aby(){
 	cycles = 4;
-	char low[]="00000000";
 	char localflags[]="00000000";
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	cp_register(dbr, low);
-
-	inc_pc();
-	cp_register(pcl, abrl);
-	cp_register(pch, abrh);
-
-	set_rw2read();
-	access_memory();
-
-	alu(ALU_OP_ADD,low,idy,abrl,localflags);
-	alu(ALU_OP_ADD_WITH_CARRY,dbr,"00000000",abrh,localflags);
-
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2573,7 +2320,8 @@ void cpu_6502_eor_abs(){
 */
 void cpu_6502_eor_abx (){
 	cycles = 4;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2595,7 +2343,8 @@ void cpu_6502_eor_abx (){
 */
 void cpu_6502_eor_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2755,7 +2504,8 @@ void cpu_6502_adc_abs(){
 */
 void cpu_6502_adc_abx (){
 	cycles = 4;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2778,7 +2528,8 @@ void cpu_6502_adc_abx (){
 */
 void cpu_6502_adc_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2951,7 +2702,8 @@ void cpu_6502_sbc_abs(){
 */
 void cpu_6502_sbc_abx (){
 	cycles = 4;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -2976,7 +2728,8 @@ void cpu_6502_sbc_abx (){
 */
 void cpu_6502_sbc_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -3068,7 +2821,7 @@ void cpu_6502_cmp_zpx (){
 */
 void cpu_6502_cmp_izx(){
 	cycles = 6;
-	adr_zpx();
+	adr_izx();
 	set_rw2read();
 	access_memory();
 
@@ -3134,7 +2887,8 @@ void cpu_6502_cmp_abs(){
 */
 void cpu_6502_cmp_abx (){
 	cycles = 4;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -3156,7 +2910,8 @@ void cpu_6502_cmp_abx (){
 */
 void cpu_6502_cmp_aby(){
 	cycles = 4;
-	adr_aby();
+	char localflags[]="00000000";
+	adr_aby(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -3382,7 +3137,8 @@ void cpu_6502_dec_abs(){
 */
 void cpu_6502_dec_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 
@@ -3512,7 +3268,8 @@ void cpu_6502_inc_abs(){
 */
 void cpu_6502_inc_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 	
@@ -3668,7 +3425,8 @@ void cpu_6502_asl_abs(){
 */
 void cpu_6502_asl_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 	
@@ -3793,7 +3551,8 @@ void cpu_6502_rol_abs(){
 */
 void cpu_6502_rol_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 	
@@ -3917,7 +3676,8 @@ void cpu_6502_lsr_abs(){
 */
 void cpu_6502_lsr_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 	
@@ -4042,7 +3802,8 @@ void cpu_6502_ror_abs(){
 */
 void cpu_6502_ror_abx (){
 	cycles = 7;
-	adr_abx();
+	char localflags[]="00000000";
+	adr_abx(localflags);
 	set_rw2read();
 	access_memory();
 	
